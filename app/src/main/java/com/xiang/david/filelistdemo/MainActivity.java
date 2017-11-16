@@ -10,5 +10,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         int b =20;
+        int c = 30;
     }
 }
