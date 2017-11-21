@@ -6,17 +6,17 @@ package com.xiang.david.filelistdemo.model;
 
 public class FileListItem extends OriginItem{
     private String fileType = null;
-    private long fileSize = 0;
+    private String fileSize = null;
 
     public void setFileType(String fileType) {
         this.fileType = fileType;
     }
 
-    public void setFileSize(long fileSize) {
+    public void setFileSize(String fileSize) {
         this.fileSize = fileSize;
     }
 
-    public long getFileSize() {
+    public String getFileSize() {
         return fileSize;
     }
 

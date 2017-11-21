@@ -19,28 +19,22 @@ import java.util.ArrayList;
  * Created by msstrike on 2017/11/18.
  */
 
-public class ListAdapter extends BaseAdapter {
+public class MainListAdapter extends BaseAdapter {
     private ArrayList<OriginItem> listItems = null;
     private Context context = null;
-    public ListAdapter(ArrayList<FileListItem> listItems, Context context){
+    public MainListAdapter(ArrayList<OriginItem> listItems, Context context){
         this.listItems = listItems;
         this.context = context;
     }
     @Override
     public int getCount() {
-        return listItems.size();
+        if (listItems != null)  return listItems.size();
+        return 0;
     }
 
     @Override
-    public Object getItem(int position) {
-        if (fileListItems == null && dirListItems == null) return null;
-        if (fileListItems == null) return dirListItems.get(position);
-        if (dirListItems == null) return fileListItems.get(position);
-        if (position < dirListItems.size()){
-            return dirListItems.get(position);
-        } else {
-            return fileListItems.get(position - dirListItems.size());
-        }
+    public OriginItem getItem(int position) {
+        return listItems.get(position);
     }
 
     @Override
@@ -50,6 +44,7 @@ public class ListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        OriginItem item = listItems.get(position);
         ViewHolder viewHolder = null;
         if (convertView == null){
             LayoutInflater inflater = LayoutInflater.from(context);
@@ -59,8 +54,28 @@ public class ListAdapter extends BaseAdapter {
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
+        viewHolder.icon.setImageDrawable(context.getResources().getDrawable(item.getIcon()));
+        viewHolder.name.setText(item.getName());
+        switch (item.getType()){
+            case DIR:{
+                DirListItem dirItem = (DirListItem) item;
+                viewHolder.attribute1.setText("文件夹: " + dirItem.getDirCounts());
+                viewHolder.attribute2.setText("文件: " + dirItem.getFileCounts());
+                dirItem = null;
+                break;
+            }
+            case FILE:{
+                FileListItem fileItem = (FileListItem) item;
+                viewHolder.attribute1.setText("类型: " + fileItem.getFileType());
+                viewHolder.attribute2.setText("大小: " + fileItem.getFileSize());
+                fileItem = null;
+                break;
+            }
+            default:
+                break;
+        }
 
-        return null;
+        return convertView;
     }
 
     public class ViewHolder{
