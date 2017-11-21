@@ -199,7 +199,7 @@ public class MainActivity extends Activity {
         }
     }
     private void setFileIcon(FileListItem fileItem, String suffix){
-        if (suffix.equals("txt")){
+        if (suffix.equals("txt") || suffix.equals("log")){
             fileItem.setIcon(R.mipmap.txt);
         } else if (suffix.equals("doc") || suffix.equals("docx")){
             fileItem.setIcon(R.mipmap.word);
