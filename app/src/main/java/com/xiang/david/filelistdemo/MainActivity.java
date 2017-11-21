@@ -1,13 +1,12 @@
 package com.xiang.david.filelistdemo;
 
 import android.app.Activity;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.xiang.david.filelistdemo.adapter.MainListAdapter;
@@ -24,14 +23,19 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
     String[] listFiles = null;
     ListView mainList = null;
+    TextView backBtn = null;
+    TextView currentPathText = null;
 
-    String originPath = "/mnt/sdcard/";
+    String originPath = "/mnt/sdcard";
     String currentPath = null;
+    int currentPoistion = 0;
+    boolean backFlag = false;
     DirItemFactory dirFactory = new DirItemFactory();
     FileItemFactory fileFactory = new FileItemFactory();
     ArrayList<OriginItem> fileListItems = new ArrayList<>();
     ArrayList<OriginItem> dirListItems = new ArrayList<>();
     ArrayList<OriginItem> mainListItems = new ArrayList<>();
+
     MainListAdapter mainAdapter = null;
 
     FileFilter dirFilter = new FileFilter() {
@@ -55,6 +59,7 @@ public class MainActivity extends Activity {
     AdapterView.OnItemClickListener itemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            currentPoistion = position;
             OriginItem originItem = mainAdapter.getItem(position);
             switch (originItem.getType()){
                 case FILE:{
@@ -64,14 +69,45 @@ public class MainActivity extends Activity {
                     StringBuilder parentPathBuilder = new StringBuilder(originItem.getAbsolutePath());
                     parentPathBuilder.append("/");
                     parentPathBuilder.append(originItem.getName());
-                    Log.i("dirPath", parentPathBuilder.toString());
                     File parentDir = new File(parentPathBuilder.toString());
+                    currentPathText.setText(originItem.getName());
+                    if (backFlag == false){
+                        backBtn.setText("返回");
+                        backBtn.setVisibility(View.VISIBLE);
+                        backFlag = true;
+                    }
                     showList(parentDir);
                     mainAdapter.notifyDataSetChanged();
                     parentPathBuilder = null;
                     parentDir = null;
                     break;
                 }
+            }
+        }
+    };
+
+    View.OnClickListener clickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            switch (v.getId()){
+                case R.id.back_btn:{
+                    StringBuilder backBuilder = new StringBuilder(currentPath);
+                    backBuilder.delete(backBuilder.lastIndexOf("/"), backBuilder.length());
+                    File backPath = new File(backBuilder.toString());
+                    if (backBuilder.toString().equals(originPath)){
+                        backBtn.setVisibility(View.INVISIBLE);
+                        currentPathText.setText("文件目录");
+                        backFlag = false;
+                    } else {
+                        currentPathText.setText(backPath.getName());
+                    }
+                    showList(backPath);
+                    mainAdapter.notifyDataSetChanged();
+                    mainList.setSelection(currentPoistion);
+                    break;
+                }
+                default:
+                    break;
             }
         }
     };
@@ -86,19 +122,21 @@ public class MainActivity extends Activity {
 
     private void findView(){
         mainList = (ListView) findViewById(R.id.file_list);
+        backBtn = (TextView) findViewById(R.id.back_btn);
+        currentPathText = (TextView) findViewById(R.id.current_path_text);
     }
 
     private void setClickListener(){
         mainList.setOnItemClickListener(itemClickListener);
+        backBtn.setOnClickListener(clickListener);
     }
 
 
     private void initial(){
         findView();
-        StringBuilder builder = new StringBuilder(originPath);
-        currentPath = builder.toString();
         File file = new File(originPath);
         showList(file);
+        backBtn.setVisibility(View.INVISIBLE);
         if (mainListItems != null){
             mainAdapter = new MainListAdapter(mainListItems, MainActivity.this);
             mainList.setAdapter(mainAdapter);
@@ -109,14 +147,15 @@ public class MainActivity extends Activity {
     private void showList(File parentDir){
         fileListItems.clear();
         dirListItems.clear();
+        mainListItems.clear();
         listFiles = parentDir.list();
 
         String parentPath = parentDir.getAbsolutePath();
-        Log.i("MSstrike", "parentPath:" + parentPath);
+        currentPath = new StringBuilder(parentPath).toString();
         if (listFiles.length > 0){
             for (String s : listFiles){
-                Log.i("MSstrike", "name:" + s);
                 StringBuilder currentPathBuilder = new StringBuilder(parentPath);
+                //检查每一个子文件或文件夹
                 currentPathBuilder.append("/");
                 currentPathBuilder.append(s);
                 File file = new File(currentPathBuilder.toString());
@@ -149,11 +188,11 @@ public class MainActivity extends Activity {
             }
             if (fileListItems.size() > 0 && dirListItems.size() > 0){
                 dirListItems.addAll(fileListItems);
-                mainListItems = dirListItems;
+                mainListItems.addAll(dirListItems);
             }else if (fileListItems.size() > 0){
-                mainListItems = fileListItems;
+                mainListItems.addAll(fileListItems);
             }else if (dirListItems.size() > 0){
-                mainListItems = dirListItems;
+                mainListItems.addAll(dirListItems);
             }
         } else {
             Toast.makeText(MainActivity.this,"当前目录为空",Toast.LENGTH_SHORT).show();

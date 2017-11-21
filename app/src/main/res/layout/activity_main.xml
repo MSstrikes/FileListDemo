@@ -6,8 +6,30 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context="com.xiang.david.filelistdemo.MainActivity">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/blueviolet">
+        <TextView
+            android:id="@+id/back_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_centerVertical="true"
+            android:textColor="@color/white"
+            android:textSize="15sp" />
+        <TextView
+            android:id="@+id/current_path_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="17sp"
+            android:layout_centerInParent="true"
+            android:text="文件目录"
+            android:textColor="@color/white"/>
+    </RelativeLayout>
     <ListView
         android:id="@+id/file_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:listSelector="@android:color/transparent"/>
 </LinearLayout>
