@@ -2,7 +2,6 @@ package com.xiang.david.filelistdemo;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -30,6 +29,8 @@ public class MainActivity extends Activity {
     String currentPath = null;
     int currentPoistion = 0;
     boolean backFlag = false;
+    int[] clickOrder = new int[100];
+
     DirItemFactory dirFactory = new DirItemFactory();
     FileItemFactory fileFactory = new FileItemFactory();
     ArrayList<OriginItem> fileListItems = new ArrayList<>();
@@ -59,13 +60,14 @@ public class MainActivity extends Activity {
     AdapterView.OnItemClickListener itemClickListener = new AdapterView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-            currentPoistion = position;
             OriginItem originItem = mainAdapter.getItem(position);
             switch (originItem.getType()){
                 case FILE:{
                     break;
                 }
                 case DIR:{
+                    clickOrder[currentPoistion] = position;
+                    currentPoistion++;
                     StringBuilder parentPathBuilder = new StringBuilder(originItem.getAbsolutePath());
                     parentPathBuilder.append("/");
                     parentPathBuilder.append(originItem.getName());
@@ -78,6 +80,7 @@ public class MainActivity extends Activity {
                     }
                     showList(parentDir);
                     mainAdapter.notifyDataSetChanged();
+                    mainList.setSelection(0);
                     parentPathBuilder = null;
                     parentDir = null;
                     break;
@@ -103,7 +106,8 @@ public class MainActivity extends Activity {
                     }
                     showList(backPath);
                     mainAdapter.notifyDataSetChanged();
-                    mainList.setSelection(currentPoistion);
+                    --currentPoistion;
+                    mainList.setSelection(clickOrder[currentPoistion]);
                     break;
                 }
                 default:
