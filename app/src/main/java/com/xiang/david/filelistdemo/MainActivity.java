@@ -1,6 +1,7 @@
 package com.xiang.david.filelistdemo;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -10,6 +11,7 @@ import android.widget.Toast;
 
 import com.xiang.david.filelistdemo.adapter.MainListAdapter;
 import com.xiang.david.filelistdemo.factroy.DirItemFactory;
+import com.xiang.david.filelistdemo.factroy.FileIntentFactory;
 import com.xiang.david.filelistdemo.factroy.FileItemFactory;
 import com.xiang.david.filelistdemo.model.DirListItem;
 import com.xiang.david.filelistdemo.model.FileListItem;
@@ -33,6 +35,8 @@ public class MainActivity extends Activity {
 
     DirItemFactory dirFactory = new DirItemFactory();
     FileItemFactory fileFactory = new FileItemFactory();
+    FileIntentFactory fileIntentFactory = new FileIntentFactory();
+
     ArrayList<OriginItem> fileListItems = new ArrayList<>();
     ArrayList<OriginItem> dirListItems = new ArrayList<>();
     ArrayList<OriginItem> mainListItems = new ArrayList<>();
@@ -63,6 +67,9 @@ public class MainActivity extends Activity {
             OriginItem originItem = mainAdapter.getItem(position);
             switch (originItem.getType()){
                 case FILE:{
+                    FileListItem item = (FileListItem) originItem;
+                    Intent intent = fileIntentFactory.generateFileIntent(item);
+                    startActivity(intent);
                     break;
                 }
                 case DIR:{
@@ -94,20 +101,7 @@ public class MainActivity extends Activity {
         public void onClick(View v) {
             switch (v.getId()){
                 case R.id.back_btn:{
-                    StringBuilder backBuilder = new StringBuilder(currentPath);
-                    backBuilder.delete(backBuilder.lastIndexOf("/"), backBuilder.length());
-                    File backPath = new File(backBuilder.toString());
-                    if (backBuilder.toString().equals(originPath)){
-                        backBtn.setVisibility(View.INVISIBLE);
-                        currentPathText.setText("文件目录");
-                        backFlag = false;
-                    } else {
-                        currentPathText.setText(backPath.getName());
-                    }
-                    showList(backPath);
-                    mainAdapter.notifyDataSetChanged();
-                    --currentPoistion;
-                    mainList.setSelection(clickOrder[currentPoistion]);
+                    backBehindPage();
                     break;
                 }
                 default:
@@ -123,6 +117,14 @@ public class MainActivity extends Activity {
         initial();
     }
 
+    @Override
+    public void onBackPressed() {
+        if (backFlag == true){
+            backBehindPage();
+        } else {
+            super.onBackPressed();
+        }
+    }
 
     private void findView(){
         mainList = (ListView) findViewById(R.id.file_list);
@@ -202,6 +204,7 @@ public class MainActivity extends Activity {
             Toast.makeText(MainActivity.this,"当前目录为空",Toast.LENGTH_SHORT).show();
         }
     }
+
     private void setFileIcon(FileListItem fileItem, String suffix){
         if (suffix.equals("txt") || suffix.equals("log")){
             fileItem.setIcon(R.mipmap.txt);
@@ -225,8 +228,28 @@ public class MainActivity extends Activity {
             fileItem.setIcon(R.mipmap.music);
         } else if (suffix.equals("jpg") || suffix.equals("png")){
             fileItem.setIcon(R.mipmap.pic);
+        } else if(suffix.equals("mp4") || suffix.equals("rmvb")) {
+            fileItem.setIcon(R.mipmap.video);
         } else {
             fileItem.setIcon(R.mipmap.unknown);
         }
+    }
+
+    private void backBehindPage(){
+        StringBuilder backBuilder = new StringBuilder(currentPath);
+        backBuilder.delete(backBuilder.lastIndexOf("/"), backBuilder.length());
+        File backPath = new File(backBuilder.toString());
+        if (backBuilder.toString().equals(originPath)){
+            backBtn.setVisibility(View.INVISIBLE);
+            currentPathText.setText("文件目录");
+            backFlag = false;
+        } else {
+            currentPathText.setText(backPath.getName());
+        }
+        showList(backPath);
+        mainAdapter.notifyDataSetChanged();
+        --currentPoistion;
+        mainList.setSelection(clickOrder[currentPoistion]);
+        backPath = null;
     }
 }
