@@ -224,7 +224,7 @@ public class MainActivity extends Activity {
             fileItem.setIcon(R.mipmap.psd);
         } else if (suffix.equals("apk")){
             fileItem.setIcon(R.mipmap.apk);
-        } else if (suffix.equals("mp3") || suffix.equals("wma")){
+        } else if (suffix.equals("mp3") || suffix.equals("amr")){
             fileItem.setIcon(R.mipmap.music);
         } else if (suffix.equals("jpg") || suffix.equals("png")){
             fileItem.setIcon(R.mipmap.pic);

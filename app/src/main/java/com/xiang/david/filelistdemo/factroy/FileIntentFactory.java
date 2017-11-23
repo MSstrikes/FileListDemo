@@ -33,7 +33,7 @@ public class FileIntentFactory {
             return getAllIntent(filePath.toString());
         } else if (suffix.equals("apk")){
             return getApkFileIntent(filePath.toString());
-        } else if (suffix.equals("mp3") || suffix.equals("wma")){
+        } else if (suffix.equals("mp3") || suffix.equals("amr")){
             return getAudioFileIntent(filePath.toString());
         } else if (suffix.equals("jpg") || suffix.equals("png")){
             return getImageFileIntent(filePath.toString());
