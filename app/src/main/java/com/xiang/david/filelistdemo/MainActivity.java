@@ -16,6 +16,7 @@ import com.xiang.david.filelistdemo.factroy.FileItemFactory;
 import com.xiang.david.filelistdemo.model.DirListItem;
 import com.xiang.david.filelistdemo.model.FileListItem;
 import com.xiang.david.filelistdemo.model.OriginItem;
+import com.xiang.david.filelistdemo.view.LongClickDialog;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -43,6 +44,7 @@ public class MainActivity extends Activity {
 
     MainListAdapter mainAdapter = null;
 
+    LongClickDialog longClickDialog = null;
     FileFilter dirFilter = new FileFilter() {
         @Override
         public boolean accept(File pathname) {
@@ -58,6 +60,16 @@ public class MainActivity extends Activity {
             if (pathname.getName().indexOf(".") == 0) return false;
             if (pathname.isFile()) return true;
             return false;
+        }
+    };
+    AdapterView.OnItemLongClickListener itemLongClickListener = new AdapterView.OnItemLongClickListener() {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            if (longClickDialog != null){
+                longClickDialog.show(getFragmentManager(), "LongClickDialog");
+                longClickDialog.setCancelable(false);
+            }
+            return true;
         }
     };
 
@@ -134,12 +146,14 @@ public class MainActivity extends Activity {
 
     private void setClickListener(){
         mainList.setOnItemClickListener(itemClickListener);
+        mainList.setOnItemLongClickListener(itemLongClickListener);
         backBtn.setOnClickListener(clickListener);
     }
 
 
     private void initial(){
         findView();
+        longClickDialog = new LongClickDialog();
         File file = new File(originPath);
         showList(file);
         backBtn.setVisibility(View.INVISIBLE);
