@@ -67,7 +67,7 @@ public class MainActivity extends Activity {
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             if (longClickDialog != null){
                 longClickDialog.show(getFragmentManager(), "LongClickDialog");
-                longClickDialog.setCancelable(false);
+                longClickDialog.setCancelable(true);
             }
             return true;
         }
@@ -157,7 +157,7 @@ public class MainActivity extends Activity {
         File file = new File(originPath);
         showList(file);
         backBtn.setVisibility(View.INVISIBLE);
-        if (mainListItems != null){
+        if (mainListItems != null && mainListItems.size() > 0){
             mainAdapter = new MainListAdapter(mainListItems, MainActivity.this);
             mainList.setAdapter(mainAdapter);
             setClickListener();
