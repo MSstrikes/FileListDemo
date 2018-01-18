@@ -3,6 +3,8 @@ package com.xiang.david.filelistdemo;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -67,6 +69,10 @@ public class MainActivity extends Activity {
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             if (longClickDialog != null){
                 longClickDialog.show(getFragmentManager(), "LongClickDialog");
+                Bundle fileBundle = new Bundle();
+                OriginItem item = mainListItems.get(position);
+                fileBundle.putString("filePath",item.getAbsolutePath() + "/" + item.getName());
+                longClickDialog.setArguments(fileBundle);
                 longClickDialog.setCancelable(true);
             }
             return true;
@@ -121,6 +127,8 @@ public class MainActivity extends Activity {
             }
         }
     };
+
+    private final MainHandler mainHandler = new MainHandler(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -265,5 +273,25 @@ public class MainActivity extends Activity {
         --currentPoistion;
         mainList.setSelection(clickOrder[currentPoistion]);
         backPath = null;
+    }
+
+    private static class MainHandler extends Handler{
+        private  MainActivity mActivity;
+
+        private MainHandler(MainActivity mActivity) {
+            this.mActivity = mActivity;
+        }
+
+
+        @Override
+        public void handleMessage(Message msg) {
+            if (mActivity == null){
+                super.handleMessage(msg);
+                return;
+            }
+            switch (msg.what){
+
+            }
+        }
     }
 }
