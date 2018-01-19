@@ -1,6 +1,5 @@
 package com.xiang.david.filelistdemo.network;
 
-import android.util.Log;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

@@ -1,10 +1,12 @@
 package com.xiang.david.filelistdemo;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Parcelable;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
@@ -47,6 +49,7 @@ public class MainActivity extends Activity {
     MainListAdapter mainAdapter = null;
 
     LongClickDialog longClickDialog = null;
+
     FileFilter dirFilter = new FileFilter() {
         @Override
         public boolean accept(File pathname) {
@@ -162,6 +165,7 @@ public class MainActivity extends Activity {
     private void initial(){
         findView();
         longClickDialog = new LongClickDialog();
+        longClickDialog.setHandler(mainHandler);
         File file = new File(originPath);
         showList(file);
         backBtn.setVisibility(View.INVISIBLE);
@@ -274,7 +278,12 @@ public class MainActivity extends Activity {
         mainList.setSelection(clickOrder[currentPoistion]);
         backPath = null;
     }
-
+    public Handler getHandler(){
+        if (mainHandler != null){
+            return mainHandler;
+        }
+        return null;
+    }
     private static class MainHandler extends Handler{
         private  MainActivity mActivity;
 
@@ -290,8 +299,14 @@ public class MainActivity extends Activity {
                 return;
             }
             switch (msg.what){
-
+                case 1: {
+                    String a = (String)msg.obj;
+                    Toast.makeText(mActivity, a, Toast.LENGTH_SHORT).show();
+                }break;
+                default:
+                    break;
             }
         }
     }
+
 }
