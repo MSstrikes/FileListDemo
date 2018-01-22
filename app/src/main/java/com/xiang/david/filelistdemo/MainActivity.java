@@ -1,18 +1,18 @@
 package com.xiang.david.filelistdemo;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Parcelable;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.daimajia.numberprogressbar.NumberProgressBar;
 import com.xiang.david.filelistdemo.adapter.MainListAdapter;
 import com.xiang.david.filelistdemo.factroy.DirItemFactory;
 import com.xiang.david.filelistdemo.factroy.FileIntentFactory;
@@ -26,6 +26,9 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 
+/*
+    注意 getAbsolutePath获得的地址最后没有以‘/’结束，必须自己添加
+ */
 public class MainActivity extends Activity {
     String[] listFiles = null;
     ListView mainList = null;
@@ -46,7 +49,7 @@ public class MainActivity extends Activity {
     ArrayList<OriginItem> dirListItems = new ArrayList<>();
     ArrayList<OriginItem> mainListItems = new ArrayList<>();
 
-    MainListAdapter mainAdapter = null;
+    static MainListAdapter mainAdapter = null;
 
     LongClickDialog longClickDialog = null;
 
@@ -71,6 +74,7 @@ public class MainActivity extends Activity {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             if (longClickDialog != null){
+                mainHandler.setItemView(view, position);
                 longClickDialog.show(getFragmentManager(), "LongClickDialog");
                 Bundle fileBundle = new Bundle();
                 OriginItem item = mainListItems.get(position);
@@ -176,6 +180,7 @@ public class MainActivity extends Activity {
         }
     }
 
+    //显示当前目录下的所有文件及文件夹
     private void showList(File parentDir){
         fileListItems.clear();
         dirListItems.clear();
@@ -183,7 +188,9 @@ public class MainActivity extends Activity {
         listFiles = parentDir.list();
 
         String parentPath = parentDir.getAbsolutePath();
+        //防止使用相同的引用
         currentPath = new StringBuilder(parentPath).toString();
+
         if (listFiles.length > 0){
             for (String s : listFiles){
                 StringBuilder currentPathBuilder = new StringBuilder(parentPath);
@@ -191,6 +198,7 @@ public class MainActivity extends Activity {
                 currentPathBuilder.append("/");
                 currentPathBuilder.append(s);
                 File file = new File(currentPathBuilder.toString());
+                //过滤所有以.开头的文件和文件夹
                 if (s.indexOf(".") != 0){
                     if (file.isDirectory()){
                         DirListItem dirItem = (DirListItem) dirFactory.generateItem(s, parentPath, OriginItem.Type.DIR);
@@ -216,6 +224,7 @@ public class MainActivity extends Activity {
                         fileListItems.add(fileItem);
                     }
                 }
+                file = null;
                 currentPathBuilder = null;
             }
             if (fileListItems.size() > 0 && dirListItems.size() > 0){
@@ -278,20 +287,32 @@ public class MainActivity extends Activity {
         mainList.setSelection(clickOrder[currentPoistion]);
         backPath = null;
     }
-    public Handler getHandler(){
-        if (mainHandler != null){
-            return mainHandler;
-        }
-        return null;
-    }
+
+
     private static class MainHandler extends Handler{
         private  MainActivity mActivity;
+
+        private View view;
+
+        private int position;
 
         private MainHandler(MainActivity mActivity) {
             this.mActivity = mActivity;
         }
 
+        private LinearLayout progressBarLayout;
 
+        private NumberProgressBar progressBar;
+
+        private TextView transferTitle;
+
+        private void setItemView(View view, int position){
+            this.view = view;
+            this.position = position;
+            progressBarLayout = (LinearLayout) view.findViewById(R.id.item_progress_layout);
+            progressBar = (NumberProgressBar) view.findViewById(R.id.item_progress_bar);
+            transferTitle = (TextView) view.findViewById(R.id.item_transport_title);
+        }
         @Override
         public void handleMessage(Message msg) {
             if (mActivity == null){
@@ -299,10 +320,27 @@ public class MainActivity extends Activity {
                 return;
             }
             switch (msg.what){
-                case 1: {
-                    String a = (String)msg.obj;
-                    Toast.makeText(mActivity, a, Toast.LENGTH_SHORT).show();
+                case 0:{
+                    mainAdapter.setItemState(position, true);
+                    progressBarLayout.setVisibility(View.VISIBLE);
+                    transferTitle.setVisibility(View.VISIBLE);
                 }break;
+                case 1: {
+                    int a = (int)msg.obj;
+                    progressBar.incrementProgressBy(a);
+                }break;
+                case 2: {
+                    progressBarLayout.setVisibility(View.GONE);
+                    progressBar.setProgress(0);
+                    transferTitle.setText("传输完成");
+                    try {
+                        Thread.sleep(1000);
+                        transferTitle.setVisibility(View.GONE);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    mainAdapter.setItemState(position, false);
+                }
                 default:
                     break;
             }

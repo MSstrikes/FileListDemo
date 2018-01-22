@@ -13,9 +13,7 @@ import android.widget.Button;
 import com.xiang.david.filelistdemo.R;
 import com.xiang.david.filelistdemo.network.FileTransferClient;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -59,22 +57,18 @@ public class LongClickDialog extends DialogFragment{
     View.OnClickListener sendBtnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            /*try {
-                FileTransferClient transferClient = new FileTransferClient("192.168.1.194",8888, filePath);
+            try {
+                FileTransferClient transferClient = new FileTransferClient("192.168.1.194",8888, filePath, handler);
                 ExecutorService service = Executors.newCachedThreadPool();
                 service.execute(transferClient);
             } catch (IOException e) {
                 e.printStackTrace();
-            }*/
-            Message msg = new Message();
-            msg.what = 1;
-            String a = "hello world";
-            msg.obj = a;
-            handler.sendMessage(msg);
+            }
             dismiss();
         }
     };
     public void setHandler(Handler handler){
         this.handler = handler;
     }
+
 }
