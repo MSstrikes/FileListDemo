@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.design.widget.BottomSheetBehavior;
+import android.support.design.widget.BottomSheetDialog;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
@@ -34,6 +36,7 @@ public class MainActivity extends Activity {
     ListView mainList = null;
     TextView backBtn = null;
     TextView currentPathText = null;
+    BottomSheetBehavior behavior = null;
 
     String originPath = "/mnt/sdcard";
     String currentPath = null;
@@ -73,7 +76,12 @@ public class MainActivity extends Activity {
     AdapterView.OnItemLongClickListener itemLongClickListener = new AdapterView.OnItemLongClickListener() {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            if (longClickDialog != null){
+            if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
+                behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            } else {
+                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            }
+            /*if (longClickDialog != null){
                 mainHandler.setItemView(view, position);
                 longClickDialog.show(getFragmentManager(), "LongClickDialog");
                 Bundle fileBundle = new Bundle();
@@ -81,7 +89,7 @@ public class MainActivity extends Activity {
                 fileBundle.putString("filePath",item.getAbsolutePath() + "/" + item.getName());
                 longClickDialog.setArguments(fileBundle);
                 longClickDialog.setCancelable(true);
-            }
+            }*/
             return true;
         }
     };
@@ -157,6 +165,7 @@ public class MainActivity extends Activity {
         mainList = (ListView) findViewById(R.id.file_list);
         backBtn = (TextView) findViewById(R.id.back_btn);
         currentPathText = (TextView) findViewById(R.id.current_path_text);
+        behavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
     }
 
     private void setClickListener(){
