@@ -32,13 +32,26 @@
             <LinearLayout
                 android:orientation="horizontal"
                 android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
                 android:layout_width="wrap_content"
+                android:layout_marginRight="10dp"
                 android:layout_height="wrap_content">
                 <TextView
                     android:id="@+id/internet_state_text"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:text="未连接"
+                    android:textSize="12sp"
+                    android:textColor="@color/white"/>
+                <ImageView
+                    android:id="@+id/internet_state_img"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="3dp"
+                    android:src="@drawable/ic_connect"
+                    />
             </LinearLayout>
         </RelativeLayout>
         <ListView
