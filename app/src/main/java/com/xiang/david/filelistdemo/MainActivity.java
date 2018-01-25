@@ -301,27 +301,10 @@ public class MainActivity extends Activity {
     private static class MainHandler extends Handler{
         private  MainActivity mActivity;
 
-        private View view;
-
-        private int position;
-
         private MainHandler(MainActivity mActivity) {
             this.mActivity = mActivity;
         }
 
-        private LinearLayout progressBarLayout;
-
-        private NumberProgressBar progressBar;
-
-        private TextView transferTitle;
-
-        private void setItemView(View view, int position){
-            this.view = view;
-            this.position = position;
-            progressBarLayout = (LinearLayout) view.findViewById(R.id.item_progress_layout);
-            progressBar = (NumberProgressBar) view.findViewById(R.id.item_progress_bar);
-            transferTitle = (TextView) view.findViewById(R.id.item_transport_title);
-        }
         @Override
         public void handleMessage(Message msg) {
             if (mActivity == null){
@@ -330,25 +313,15 @@ public class MainActivity extends Activity {
             }
             switch (msg.what){
                 case 0:{
-                    mainAdapter.setItemState(position, true);
-                    progressBarLayout.setVisibility(View.VISIBLE);
-                    transferTitle.setVisibility(View.VISIBLE);
+
+
                 }break;
                 case 1: {
                     int a = (int)msg.obj;
-                    progressBar.incrementProgressBy(a);
                 }break;
                 case 2: {
-                    progressBarLayout.setVisibility(View.GONE);
-                    progressBar.setProgress(0);
-                    transferTitle.setText("传输完成");
-                    try {
-                        Thread.sleep(1000);
-                        transferTitle.setVisibility(View.GONE);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    mainAdapter.setItemState(position, false);
+
+
                 }
                 default:
                     break;

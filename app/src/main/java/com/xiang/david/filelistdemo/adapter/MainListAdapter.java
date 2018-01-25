@@ -63,13 +63,6 @@ public class MainListAdapter extends BaseAdapter {
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
-        if (transferingItem.get(position) != null && transferingItem.get(position) == true){
-            viewHolder.progressBarLayout.setVisibility(View.VISIBLE);
-            viewHolder.transferTitle.setVisibility(View.VISIBLE);
-        } else {
-            viewHolder.progressBarLayout.setVisibility(View.GONE);
-            viewHolder.transferTitle.setVisibility(View.GONE);
-        }
         viewHolder.icon.setImageDrawable(context.getResources().getDrawable(item.getIcon()));
         viewHolder.name.setText(item.getName());
         switch (item.getType()){
@@ -100,17 +93,12 @@ public class MainListAdapter extends BaseAdapter {
         public TextView attribute1;
         public TextView attribute2;
         public TextView transferTitle;
-        public NumberProgressBar progressBar;
-        public LinearLayout progressBarLayout;
 
         public ViewHolder(View convertView){
             icon = (ImageView) convertView.findViewById(R.id.item_icon);
             name = (TextView) convertView.findViewById(R.id.item_name);
             attribute1 = (TextView) convertView.findViewById(R.id.item_attribute1);
             attribute2 = (TextView) convertView.findViewById(R.id.item_attribute2);
-            progressBar = (NumberProgressBar) convertView.findViewById(R.id.item_progress_bar);
-            transferTitle = (TextView) convertView.findViewById(R.id.item_transport_title);
-            progressBarLayout = (LinearLayout) convertView.findViewById(R.id.item_progress_layout);
         }
 
     }
