@@ -73,7 +73,6 @@ public class FileTransferClient extends Thread{
             try {
                 dout.close();
                 din.close();
-                a
                 socket.close();
                 accessFile.close();
             } catch (IOException e) {
