@@ -58,7 +58,7 @@ public class LongClickDialog extends DialogFragment{
         @Override
         public void onClick(View v) {
             try {
-                FileTransferClient transferClient = new FileTransferClient("192.168.1.194",8888, filePath, handler);
+                FileTransferClient transferClient = new FileTransferClient("192.168.1.42",8888, filePath, handler);
                 ExecutorService service = Executors.newCachedThreadPool();
                 service.execute(transferClient);
             } catch (IOException e) {

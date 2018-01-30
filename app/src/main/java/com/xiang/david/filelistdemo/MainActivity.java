@@ -36,7 +36,10 @@ public class MainActivity extends Activity {
     ListView mainList = null;
     TextView backBtn = null;
     TextView currentPathText = null;
+    TextView fileTitle = null;
+    TextView seqNum = null;
     BottomSheetBehavior behavior = null;
+    NumberProgressBar progressBar = null;
 
     String originPath = "/mnt/sdcard";
     String currentPath = null;
@@ -76,20 +79,14 @@ public class MainActivity extends Activity {
     AdapterView.OnItemLongClickListener itemLongClickListener = new AdapterView.OnItemLongClickListener() {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-            if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
-                behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-            } else {
-                behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-            }
-            /*if (longClickDialog != null){
-                mainHandler.setItemView(view, position);
+            if (longClickDialog != null){
                 longClickDialog.show(getFragmentManager(), "LongClickDialog");
                 Bundle fileBundle = new Bundle();
                 OriginItem item = mainListItems.get(position);
                 fileBundle.putString("filePath",item.getAbsolutePath() + "/" + item.getName());
                 longClickDialog.setArguments(fileBundle);
                 longClickDialog.setCancelable(true);
-            }*/
+            }
             return true;
         }
     };
@@ -166,6 +163,8 @@ public class MainActivity extends Activity {
         backBtn = (TextView) findViewById(R.id.back_btn);
         currentPathText = (TextView) findViewById(R.id.current_path_text);
         behavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
+        mainHandler.setBehavior(behavior);
+        progressBar = (NumberProgressBar) findViewById(R.id.bottom_progressbar);
     }
 
     private void setClickListener(){
@@ -299,12 +298,14 @@ public class MainActivity extends Activity {
 
 
     private static class MainHandler extends Handler{
-        private  MainActivity mActivity;
-
+        private MainActivity mActivity;
+        private BottomSheetBehavior behavior;
         private MainHandler(MainActivity mActivity) {
             this.mActivity = mActivity;
         }
-
+        public void setBehavior(BottomSheetBehavior behavior){
+            this.behavior = behavior;
+        }
         @Override
         public void handleMessage(Message msg) {
             if (mActivity == null){
@@ -313,14 +314,26 @@ public class MainActivity extends Activity {
             }
             switch (msg.what){
                 case 0:{
+                    if (behavior != null){
+                        if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED){
+                            behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+                        } else {
+                            //队列增加
 
-
+                        }
+                    }
                 }break;
                 case 1: {
-                    int a = (int)msg.obj;
+                    int progress = (int)msg.obj;
+
                 }break;
                 case 2: {
-
+                    if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
+                        behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    } else {
+                        //队列增加
+                        Toast.makeText(mActivity, "传输完成", Toast.LENGTH_SHORT).show();
+                    }
 
                 }
                 default:

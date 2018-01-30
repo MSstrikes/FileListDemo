@@ -33,11 +33,13 @@ public class FileTransferClient extends Thread{
         this.portNum = portNum;
         this.filePath = filePath;
         this.handler = handler;
+        startTransfer();
+
     }
 
     @Override
     public void run() {
-        try {
+        /*try {
             socket = new Socket(address, portNum);
             dout = new DataOutputStream(socket.getOutputStream());
             din = new DataInputStream(socket.getInputStream());
@@ -47,9 +49,10 @@ public class FileTransferClient extends Thread{
             totalSize = accessFile.length();
             //获取当前进度再发送更好
             dout.writeUTF(sendFile.getName());
-            dout.writeLong(0);
+            //dout.writeLong(0);
             dout.writeLong(totalSize);
-            startPointer = din.readLong();
+            startPointer = 0;
+            //startPointer = din.readLong();
             accessFile.skipBytes((int)startPointer);
             startTransfer();
             int total = (int)accessFile.length();
@@ -78,12 +81,13 @@ public class FileTransferClient extends Thread{
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     }
     private void startTransfer(){
         Message msg = new Message();
         msg.what = 0;
         handler.sendMessage(msg);
+
     }
     private void sendProgress(int progress){
         Message msg = new Message();
