@@ -22,11 +22,14 @@ import com.xiang.david.filelistdemo.factroy.FileItemFactory;
 import com.xiang.david.filelistdemo.model.DirListItem;
 import com.xiang.david.filelistdemo.model.FileListItem;
 import com.xiang.david.filelistdemo.model.OriginItem;
+import com.xiang.david.filelistdemo.network.FileTransferClient;
 import com.xiang.david.filelistdemo.view.LongClickDialog;
 
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /*
     注意 getAbsolutePath获得的地址最后没有以‘/’结束，必须自己添加
@@ -142,6 +145,10 @@ public class MainActivity extends Activity {
 
     private final MainHandler mainHandler = new MainHandler(this);
 
+    FileTransferClient transferClient = new FileTransferClient(mainHandler);
+
+    ExecutorService service = Executors.newCachedThreadPool();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -186,6 +193,7 @@ public class MainActivity extends Activity {
             mainList.setAdapter(mainAdapter);
             setClickListener();
         }
+        service.execute(transferClient);
     }
 
     //显示当前目录下的所有文件及文件夹

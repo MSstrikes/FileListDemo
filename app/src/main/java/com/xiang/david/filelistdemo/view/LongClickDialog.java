@@ -27,6 +27,7 @@ public class LongClickDialog extends DialogFragment{
     private View view;
     private String filePath;
     private Handler handler;
+    private FileTransferClient transfer;
 
     //这里复写oncreate方法是为了改变dialog的样式，其余的功能应该在onCreateView里面添加
     @Override
@@ -57,13 +58,7 @@ public class LongClickDialog extends DialogFragment{
     View.OnClickListener sendBtnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            try {
-                FileTransferClient transferClient = new FileTransferClient("192.168.1.42",8888, filePath, handler);
-                ExecutorService service = Executors.newCachedThreadPool();
-                service.execute(transferClient);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            //向队列添加要传送的文件实体
             dismiss();
         }
     };
@@ -71,4 +66,7 @@ public class LongClickDialog extends DialogFragment{
         this.handler = handler;
     }
 
+    public void setTransfer(FileTransferClient transfer){
+        this.transfer = transfer;
+    }
 }

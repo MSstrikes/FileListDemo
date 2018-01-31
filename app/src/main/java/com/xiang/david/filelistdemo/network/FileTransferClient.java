@@ -4,12 +4,16 @@ package com.xiang.david.filelistdemo.network;
 import android.os.Handler;
 import android.os.Message;
 
+import com.xiang.david.filelistdemo.model.TransferItem;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.Socket;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Administrator on 2018/1/18.
@@ -28,17 +32,16 @@ public class FileTransferClient extends Thread{
     private long totalSize;
     private int sendSize = 0;
     private Handler handler;
-    public FileTransferClient(String address, int portNum, String filePath, Handler handler) throws IOException {
-        this.address = address;
-        this.portNum = portNum;
-        this.filePath = filePath;
+    private LinkedBlockingQueue<TransferItem> transFilesQueue = new LinkedBlockingQueue<>();
+    public FileTransferClient(Handler handler) {
         this.handler = handler;
-        startTransfer();
-
     }
 
     @Override
     public void run() {
+        while(!Thread.interrupted()){
+
+        }
         /*try {
             socket = new Socket(address, portNum);
             dout = new DataOutputStream(socket.getOutputStream());
