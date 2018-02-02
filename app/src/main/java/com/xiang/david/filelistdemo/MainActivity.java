@@ -6,9 +6,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.design.widget.BottomSheetBehavior;
-import android.support.design.widget.BottomSheetDialog;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -35,33 +35,53 @@ import java.util.concurrent.Executors;
     注意 getAbsolutePath获得的地址最后没有以‘/’结束，必须自己添加
  */
 public class MainActivity extends Activity {
-    String[] listFiles = null;
+    /*
+        final类型
+     */
+    static final String IP_ADDRESS = "192.168.1.42";
+    static final int PORT_NUM = 8888;
+    static final int OFFLINE = 0;
+    static final int ONLINE = 1;
+    /*
+        界面控件类型
+    */
     ListView mainList = null;
     TextView backBtn = null;
     TextView currentPathText = null;
-    TextView fileTitle = null;
-    TextView seqNum = null;
     BottomSheetBehavior behavior = null;
-    NumberProgressBar progressBar = null;
+    LongClickDialog longClickDialog = null;
+    LinearLayout internetStateLayout = null;
 
+    /*
+        基本数据类型
+     */
     String originPath = "/mnt/sdcard";
     String currentPath = null;
     int currentPoistion = 0;
     boolean backFlag = false;
     int[] clickOrder = new int[100];
-
+    String[] listFiles = null;
+    public int internetState = OFFLINE;
+    /*
+        工厂类型
+     */
     DirItemFactory dirFactory = new DirItemFactory();
     FileItemFactory fileFactory = new FileItemFactory();
     FileIntentFactory fileIntentFactory = new FileIntentFactory();
-
+    /*
+        列表类型
+     */
     ArrayList<OriginItem> fileListItems = new ArrayList<>();
     ArrayList<OriginItem> dirListItems = new ArrayList<>();
     ArrayList<OriginItem> mainListItems = new ArrayList<>();
-
+    /*
+        适配器
+     */
     static MainListAdapter mainAdapter = null;
 
-    LongClickDialog longClickDialog = null;
-
+    /*
+        过滤器
+     */
     FileFilter dirFilter = new FileFilter() {
         @Override
         public boolean accept(File pathname) {
@@ -79,17 +99,24 @@ public class MainActivity extends Activity {
             return false;
         }
     };
+
+    /*
+        监听器接口实现
+     */
     AdapterView.OnItemLongClickListener itemLongClickListener = new AdapterView.OnItemLongClickListener() {
         @Override
         public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
             if (longClickDialog != null){
                 longClickDialog.show(getFragmentManager(), "LongClickDialog");
-                Bundle fileBundle = new Bundle();
-                OriginItem item = mainListItems.get(position);
-                fileBundle.putString("filePath",item.getAbsolutePath() + "/" + item.getName());
-                longClickDialog.setArguments(fileBundle);
-                longClickDialog.setCancelable(true);
+            } else {
+                longClickDialog = new LongClickDialog();
+                longClickDialog.setTransfer(transferClient);
             }
+            Bundle fileBundle = new Bundle();
+            OriginItem item = mainListItems.get(position);
+            fileBundle.putString("filePath",item.getAbsolutePath() + "/" + item.getName());
+            longClickDialog.setArguments(fileBundle);
+            longClickDialog.setCancelable(true);
             return true;
         }
     };
@@ -142,20 +169,6 @@ public class MainActivity extends Activity {
             }
         }
     };
-
-    private final MainHandler mainHandler = new MainHandler(this);
-
-    FileTransferClient transferClient = new FileTransferClient(mainHandler);
-
-    ExecutorService service = Executors.newCachedThreadPool();
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        initial();
-    }
-
     @Override
     public void onBackPressed() {
         if (backFlag == true){
@@ -165,26 +178,48 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void findView(){
-        mainList = (ListView) findViewById(R.id.file_list);
-        backBtn = (TextView) findViewById(R.id.back_btn);
-        currentPathText = (TextView) findViewById(R.id.current_path_text);
-        behavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
-        mainHandler.setBehavior(behavior);
-        progressBar = (NumberProgressBar) findViewById(R.id.bottom_progressbar);
+    View.OnClickListener layoutClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (internetState == OFFLINE){
+                transferClient.connectServer("192.168.1.42", 8888);
+            }
+        }
+    };
+    /*
+        主界面功能、工具类实现
+     */
+    private MainHandler mainHandler = null;
+
+    FileTransferClient transferClient = null;
+
+    ExecutorService service = Executors.newCachedThreadPool();
+
+    /**
+     *@functionName onCreate
+     *@date on 2018/2/2 0002 15:59
+     *@author Xiang
+     *@param @savedInstanceState
+     *@return   @void
+     *@describe activity生命周期起点，用于初始化工作
+     */
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        initial();
     }
 
-    private void setClickListener(){
-        mainList.setOnItemClickListener(itemClickListener);
-        mainList.setOnItemLongClickListener(itemLongClickListener);
-        backBtn.setOnClickListener(clickListener);
-    }
-
-
+    /**
+     *@functionName initial
+     *@date on 2018/2/2 0002 15:59
+     *@author Xiang
+     *@param @null
+     *@return @void
+     *@describe 进行初始化工作，启动传输线程
+     */
     private void initial(){
         findView();
-        longClickDialog = new LongClickDialog();
-        longClickDialog.setHandler(mainHandler);
         File file = new File(originPath);
         showList(file);
         backBtn.setVisibility(View.INVISIBLE);
@@ -196,7 +231,52 @@ public class MainActivity extends Activity {
         service.execute(transferClient);
     }
 
-    //显示当前目录下的所有文件及文件夹
+    /**
+     *@functionName findView
+     *@date on 2018/2/2 0002 16:00
+     *@author Xiang
+     *@param @null
+     *@return @void
+     *@describe 设置布局绑定控件和适配器
+     */
+    private void findView(){
+        mainHandler = new MainHandler(this);
+        transferClient = new FileTransferClient(mainHandler);
+        mainList = (ListView) findViewById(R.id.file_list);
+        backBtn = (TextView) findViewById(R.id.back_btn);
+        currentPathText = (TextView) findViewById(R.id.current_path_text);
+        internetStateLayout = (LinearLayout) findViewById(R.id.internet_state_layout);
+        behavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
+        mainHandler.setBehavior(behavior);
+
+    }
+
+    /**
+     *@functionName setClickListener
+     *@date on 2018/2/2 0002 16:11
+     *@author Xiang
+     *@param @null
+     *@return @void
+     *@describe 绑定监听器
+     */
+    private void setClickListener(){
+        mainList.setOnItemClickListener(itemClickListener);
+        mainList.setOnItemLongClickListener(itemLongClickListener);
+        backBtn.setOnClickListener(clickListener);
+        internetStateLayout.setOnClickListener(layoutClickListener);
+    }
+
+
+
+
+    /**
+     *@functionName showList
+     *@date on 2018/2/2 0002 16:12
+     *@author Xiang
+     *@param @File parentDir
+     *@return @void
+     *@describe 将当前目录下的所有文件及文件夹填充至列表中并进行显示
+     */
     private void showList(File parentDir){
         fileListItems.clear();
         dirListItems.clear();
@@ -255,7 +335,14 @@ public class MainActivity extends Activity {
             Toast.makeText(MainActivity.this,"当前目录为空",Toast.LENGTH_SHORT).show();
         }
     }
-
+    /**
+     *@functionName setFileIcon
+     *@date on 2018/2/2 0002 16:13
+     *@author Xiang
+     *@param @FileListItem fileItem @String suffix
+     *@return @void
+     *@describe 根据每个文件的后缀设置图标
+     */
     private void setFileIcon(FileListItem fileItem, String suffix){
         if (suffix.equals("txt") || suffix.equals("log")){
             fileItem.setIcon(R.mipmap.txt);
@@ -286,6 +373,14 @@ public class MainActivity extends Activity {
         }
     }
 
+    /**
+     *@functionName backBehindPage
+     *@date on 2018/2/2 0002 16:14
+     *@author Xiang
+     *@param @null
+     *@return @void
+     *@describe 回退到上一页
+     */
     private void backBehindPage(){
         StringBuilder backBuilder = new StringBuilder(currentPath);
         backBuilder.delete(backBuilder.lastIndexOf("/"), backBuilder.length());
@@ -304,12 +399,21 @@ public class MainActivity extends Activity {
         backPath = null;
     }
 
-
     private static class MainHandler extends Handler{
+        private TextView bottomFileName;
+        private TextView bottomSequence;
+        private TextView internetStateText;
+        private ImageView internetStateImg;
+        private NumberProgressBar progressBar;
         private MainActivity mActivity;
         private BottomSheetBehavior behavior;
         private MainHandler(MainActivity mActivity) {
             this.mActivity = mActivity;
+            bottomFileName = (TextView) mActivity.findViewById(R.id.bottomsheet_filename);
+            bottomSequence = (TextView) mActivity.findViewById(R.id.bottomsheet_sequence_num);
+            progressBar = (NumberProgressBar) mActivity.findViewById(R.id.bottom_progressbar);
+            internetStateText = (TextView) mActivity.findViewById(R.id.internet_state_text);
+            internetStateImg = (ImageView) mActivity.findViewById(R.id.internet_state_img);
         }
         public void setBehavior(BottomSheetBehavior behavior){
             this.behavior = behavior;
@@ -321,29 +425,46 @@ public class MainActivity extends Activity {
                 return;
             }
             switch (msg.what){
-                case 0:{
+                case 0:{ //发送开始
                     if (behavior != null){
+                        progressBar.setProgress(0);
                         if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED){
                             behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                        } else {
-                            //队列增加
-
+                            bottomFileName.setText(msg.obj.toString());
                         }
                     }
                 }break;
-                case 1: {
+                case 1: { //发送中
                     int progress = (int)msg.obj;
-
+                    progressBar.setProgress(progress);
                 }break;
-                case 2: {
-                    if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
-                        behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                    } else {
-                        //队列增加
-                        Toast.makeText(mActivity, "传输完成", Toast.LENGTH_SHORT).show();
+                case 2: { //发送完成
+                    if (msg.arg1 == 0){ //如果队列中没有要继续传输的文件
+                        if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
+                            behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                            Toast.makeText(mActivity, "传输完成", Toast.LENGTH_SHORT).show();
+                        }else {
+                            Toast.makeText(mActivity, "传输完成", Toast.LENGTH_SHORT).show();
+                        }
+                    } else { //队列中还有要继续传输的文件
+                        //队列减少
+                        int a = Integer.valueOf(bottomSequence.getText().toString());
+                        --a;
+                        bottomSequence.setText(a);
+                        Toast.makeText(mActivity, bottomFileName.getText().toString() + "传输完成", Toast.LENGTH_SHORT).show();
                     }
 
-                }
+                }break;
+                case 3:{
+                    if (msg.arg1 == OFFLINE){
+                        Toast.makeText(mActivity, "服务器连接失败", Toast.LENGTH_SHORT).show();
+                        mActivity.internetState = OFFLINE;
+                    } else {
+                        internetStateText.setText("已连接");
+                        internetStateImg.setImageResource(R.drawable.ic_disconnect);
+                        mActivity.internetState = ONLINE;
+                    }
+                }break;
                 default:
                     break;
             }

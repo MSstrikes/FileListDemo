@@ -2,8 +2,6 @@ package com.xiang.david.filelistdemo.view;
 
 import android.app.DialogFragment;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,10 +10,6 @@ import android.widget.Button;
 
 import com.xiang.david.filelistdemo.R;
 import com.xiang.david.filelistdemo.network.FileTransferClient;
-
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by msstrike on 2017/11/24.
@@ -26,7 +20,6 @@ public class LongClickDialog extends DialogFragment{
     private Button sendBtn;
     private View view;
     private String filePath;
-    private Handler handler;
     private FileTransferClient transfer;
 
     //这里复写oncreate方法是为了改变dialog的样式，其余的功能应该在onCreateView里面添加
@@ -59,12 +52,10 @@ public class LongClickDialog extends DialogFragment{
         @Override
         public void onClick(View v) {
             //向队列添加要传送的文件实体
+            transfer.getTransFilesQueue().add(filePath);
             dismiss();
         }
     };
-    public void setHandler(Handler handler){
-        this.handler = handler;
-    }
 
     public void setTransfer(FileTransferClient transfer){
         this.transfer = transfer;

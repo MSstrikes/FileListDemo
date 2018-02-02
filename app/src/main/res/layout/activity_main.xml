@@ -30,6 +30,7 @@
                 android:text="文件目录"
                 android:textColor="@color/white"/>
             <LinearLayout
+                android:id="@+id/internet_state_layout"
                 android:orientation="horizontal"
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
