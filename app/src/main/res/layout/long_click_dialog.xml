@@ -12,4 +12,5 @@
         android:background="@color/gainsboro"
         android:layout_marginTop="10dp"
         android:text="发送文件"/>
+
 </LinearLayout>

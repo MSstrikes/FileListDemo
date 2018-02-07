@@ -11,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,98 +35,105 @@ public class FileTransferClient extends Thread{
     private String address;
     private int portNum;
     private ExecutorService service = null;
-    public FileTransferClient(Handler handler) {
+    public FileTransferClient(Handler handler, String address, int portNum) {
         this.handler = handler;
-    }
-
-    public void connectServer(String address, int portNum){
         this.address = address;
         this.portNum = portNum;
         if (service == null){
             service = Executors.newCachedThreadPool();
         }
-        service.execute(doConnect);
     }
-    private Runnable doConnect = new Runnable() {
+
+    private Runnable downLinkThread = new Runnable() {
         @Override
         public void run() {
-            int count = 0;
-            Message msg = new Message();
-            msg.what = 3;
-            while (!Thread.interrupted()){
-                if (count == 10){
-                    System.out.println("服务器连接失败，退出");
-                    msg.arg1 = 0;
-                    break;
-                }
+            //接收服务器的下行数据
+        }
+    };
+
+    private Runnable upLinkThread = new Runnable() {
+        @Override
+        public void run() {
+            //向服务器发送上行数据
+            while(!Thread.interrupted()){
                 try {
-                    socket = new Socket(address, portNum);
-                    if (socket.isConnected()){
-                        System.out.println("连接建立完成！");
-                        msg.arg1 = 1;
-                        handler.sendMessage(msg);
-                        break;
+                    String item = transFilesQueue.take();
+                    dout = new DataOutputStream(socket.getOutputStream());
+                    din = new DataInputStream(socket.getInputStream());
+                    sendFile = new File(item);
+                    accessFile = new RandomAccessFile(sendFile, "rw");
+                    totalSize = accessFile.length();
+                    //获取当前进度再发送更好
+                    dout.writeUTF(sendFile.getName());
+                    //dout.writeLong(0);
+                    dout.writeLong(totalSize);
+                    startPointer = 0;
+                    //startPointer = din.readLong();
+                    accessFile.skipBytes((int)startPointer);
+                    startTransfer();
+                    int total = (int)accessFile.length();
+                    float totalF = (float) total;
+                    int progress, lastProgress = 0;
+                    byte[] bytes = new byte[1024];
+                    int length;
+                    sendSize = 0;
+                    while ((length = accessFile.read(bytes, 0 , bytes.length)) != -1){
+                        dout.write(bytes,0, length);
+                        sendSize += length;
+                        float sendSizeF = (float) sendSize;
+                        float progressF = sendSizeF / totalF;
+                        progress = (int)(progressF * 100);
+                        if (progress != lastProgress){
+                            sendProgress(progress);
+                            lastProgress = progress;
+                        }
                     }
+                    System.out.println("传输完成");
+                    sendSuccess();
+                    sendFile = null;
+                    din.close();
+                    dout.close();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
                 } catch (IOException e) {
-                    try {
-                        System.out.println("没有能够成功连接服务器，尝试重连");
-                        Thread.sleep(3000);
-                        count++;
-                    } catch (InterruptedException e1) {
-                        e1.printStackTrace();
-                    }
+                    e.printStackTrace();
                 }
             }
         }
     };
     @Override
     public void run() {
-        while(!Thread.interrupted()){
+        int count = 0;
+        Message msg = new Message();
+        msg.what = 3;
+        while (!Thread.interrupted()){
+            if (count == 10){
+                System.out.println("服务器连接失败，退出");
+                msg.arg1 = 0;
+                break;
+            }
             try {
-                String item = transFilesQueue.take();
-                dout = new DataOutputStream(socket.getOutputStream());
-                din = new DataInputStream(socket.getInputStream());
-                sendFile = new File(item);
-                accessFile = new RandomAccessFile(sendFile, "rw");
-                totalSize = accessFile.length();
-                //获取当前进度再发送更好
-                dout.writeUTF(sendFile.getName());
-                //dout.writeLong(0);
-                dout.writeLong(totalSize);
-                startPointer = 0;
-                //startPointer = din.readLong();
-                accessFile.skipBytes((int)startPointer);
-                startTransfer();
-                int total = (int)accessFile.length();
-                float totalF = (float) total;
-                int progress, lastProgress = 0;
-                byte[] bytes = new byte[1024];
-                int length;
-                sendSize = 0;
-                while ((length = accessFile.read(bytes, 0 , bytes.length)) != -1){
-                    dout.write(bytes);
-                    sendSize += length;
-                    float sendSizeF = (float) sendSize;
-                    float progressF = sendSizeF / totalF;
-                    progress = (int)(progressF * 100);
-                    if (progress != lastProgress){
-                        sendProgress(progress);
-                        lastProgress = progress;
-                    }
+                socket = new Socket(address, portNum);
+                if (socket.isConnected()){
+                    System.out.println("连接建立完成！");
+                    msg.arg1 = 1;
+                    handler.sendMessage(msg);
+                    service.execute(upLinkThread);
+                    service.execute(downLinkThread);
+                    break;
                 }
-                System.out.println("传输完成");
-                sendSuccess();
-                sendFile = null;
-                din.close();
-                dout.close();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (UnknownHostException e) {
-                e.printStackTrace();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
-                e.printStackTrace();
+                try {
+                    System.out.println("没有能够成功连接服务器，尝试重连");
+                    Thread.sleep(3000);
+                    count++;
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
             }
         }
         /*try {
@@ -197,10 +205,15 @@ public class FileTransferClient extends Thread{
         if (socket.isConnected()){
             try {
                 socket.close();
+                service.shutdownNow();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public SocketAddress getSocketInfo(){
+        return socket.getRemoteSocketAddress();
     }
     public LinkedBlockingQueue<String> getTransFilesQueue() {
         return transFilesQueue;

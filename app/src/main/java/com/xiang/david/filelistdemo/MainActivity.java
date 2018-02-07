@@ -42,6 +42,7 @@ public class MainActivity extends Activity {
     static final int PORT_NUM = 8888;
     static final int OFFLINE = 0;
     static final int ONLINE = 1;
+    static final int CONNECT_ERROR = -1;
     /*
         界面控件类型
     */
@@ -182,7 +183,15 @@ public class MainActivity extends Activity {
         @Override
         public void onClick(View v) {
             if (internetState == OFFLINE){
-                transferClient.connectServer("192.168.1.42", 8888);
+                internetStateLayout.setClickable(false);
+                //弹出窗口选择服务器
+                transferClient = new FileTransferClient(mainHandler, IP_ADDRESS, PORT_NUM);
+                service.execute(transferClient);
+            } else if (internetState == ONLINE){
+                //弹出窗口确认
+                Bundle bundle = new Bundle();
+                bundle.putString("address", transferClient.getSocketInfo().toString());
+
             }
         }
     };
@@ -193,7 +202,7 @@ public class MainActivity extends Activity {
 
     FileTransferClient transferClient = null;
 
-    ExecutorService service = Executors.newCachedThreadPool();
+    ExecutorService service = Executors.newSingleThreadExecutor();
 
     /**
      *@functionName onCreate
@@ -228,7 +237,6 @@ public class MainActivity extends Activity {
             mainList.setAdapter(mainAdapter);
             setClickListener();
         }
-        service.execute(transferClient);
     }
 
     /**
@@ -241,7 +249,6 @@ public class MainActivity extends Activity {
      */
     private void findView(){
         mainHandler = new MainHandler(this);
-        transferClient = new FileTransferClient(mainHandler);
         mainList = (ListView) findViewById(R.id.file_list);
         backBtn = (TextView) findViewById(R.id.back_btn);
         currentPathText = (TextView) findViewById(R.id.current_path_text);
@@ -404,6 +411,7 @@ public class MainActivity extends Activity {
         private TextView bottomSequence;
         private TextView internetStateText;
         private ImageView internetStateImg;
+        private LinearLayout internetStateLayout;
         private NumberProgressBar progressBar;
         private MainActivity mActivity;
         private BottomSheetBehavior behavior;
@@ -414,6 +422,7 @@ public class MainActivity extends Activity {
             progressBar = (NumberProgressBar) mActivity.findViewById(R.id.bottom_progressbar);
             internetStateText = (TextView) mActivity.findViewById(R.id.internet_state_text);
             internetStateImg = (ImageView) mActivity.findViewById(R.id.internet_state_img);
+            internetStateLayout = (LinearLayout) mActivity.findViewById(R.id.internet_state_layout);
         }
         public void setBehavior(BottomSheetBehavior behavior){
             this.behavior = behavior;
@@ -456,13 +465,19 @@ public class MainActivity extends Activity {
 
                 }break;
                 case 3:{
-                    if (msg.arg1 == OFFLINE){
+                    internetStateLayout.setClickable(true);
+                    if (msg.arg1 == CONNECT_ERROR){
                         Toast.makeText(mActivity, "服务器连接失败", Toast.LENGTH_SHORT).show();
                         mActivity.internetState = OFFLINE;
-                    } else {
+
+                    } else if (msg.arg1 == ONLINE){
                         internetStateText.setText("已连接");
                         internetStateImg.setImageResource(R.drawable.ic_disconnect);
                         mActivity.internetState = ONLINE;
+                    } else {
+                        Toast.makeText(mActivity, "已断开", Toast.LENGTH_SHORT).show();
+                        internetStateText.setText("未连接");
+                        internetStateImg.setImageResource(R.drawable.ic_connect);
                     }
                 }break;
                 default:
