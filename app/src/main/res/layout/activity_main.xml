@@ -139,7 +139,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="5dp"
-                android:background="@mipmap/start"/>
+                android:background="@mipmap/pause"/>
             <ImageButton
                 android:id="@+id/bottom_stop_btn"
                 android:layout_width="wrap_content"

@@ -8,6 +8,8 @@ import android.os.Message;
 import android.support.design.widget.BottomSheetBehavior;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -43,6 +45,10 @@ public class MainActivity extends Activity {
     static final int OFFLINE = 0;
     static final int ONLINE = 1;
     static final int CONNECT_ERROR = -1;
+    static final int BUSY = 1;
+    static final int FREE = 0;
+
+
     /*
         界面控件类型
     */
@@ -52,7 +58,7 @@ public class MainActivity extends Activity {
     BottomSheetBehavior behavior = null;
     LongClickDialog longClickDialog = null;
     LinearLayout internetStateLayout = null;
-
+    ImageButton startPauseBtn = null;
     /*
         基本数据类型
      */
@@ -63,6 +69,7 @@ public class MainActivity extends Activity {
     int[] clickOrder = new int[100];
     String[] listFiles = null;
     public int internetState = OFFLINE;
+    public int transferState;
     /*
         工厂类型
      */
@@ -195,6 +202,23 @@ public class MainActivity extends Activity {
             }
         }
     };
+
+    View.OnClickListener startPauseBtnClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (transferState == BUSY){
+                //暂停传输
+                transferClient.pauseTransfer();
+                transferState = FREE;
+                startPauseBtn.setBackgroundResource(R.mipmap.start);
+            } else {
+                //继续传输
+                transferClient.resumeTransfer();
+                transferState = BUSY;
+                startPauseBtn.setBackgroundResource(R.mipmap.pause);
+            }
+        }
+    };
     /*
         主界面功能、工具类实现
      */
@@ -255,7 +279,7 @@ public class MainActivity extends Activity {
         internetStateLayout = (LinearLayout) findViewById(R.id.internet_state_layout);
         behavior = BottomSheetBehavior.from(findViewById(R.id.bottom_sheet));
         mainHandler.setBehavior(behavior);
-
+        startPauseBtn = (ImageButton) findViewById(R.id.bottom_start_pause_btn);
     }
 
     /**
@@ -271,6 +295,7 @@ public class MainActivity extends Activity {
         mainList.setOnItemLongClickListener(itemLongClickListener);
         backBtn.setOnClickListener(clickListener);
         internetStateLayout.setOnClickListener(layoutClickListener);
+        startPauseBtn.setOnClickListener(startPauseBtnClickListener);
     }
 
 
@@ -436,6 +461,7 @@ public class MainActivity extends Activity {
             switch (msg.what){
                 case 0:{ //发送开始
                     if (behavior != null){
+                        mActivity.transferState = 1;
                         progressBar.setProgress(0);
                         if (behavior.getState() == BottomSheetBehavior.STATE_COLLAPSED){
                             behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
@@ -449,6 +475,7 @@ public class MainActivity extends Activity {
                 }break;
                 case 2: { //发送完成
                     if (msg.arg1 == 0){ //如果队列中没有要继续传输的文件
+                        mActivity.transferState = 0;
                         if (behavior.getState() == BottomSheetBehavior.STATE_EXPANDED){
                             behavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                             Toast.makeText(mActivity, "传输完成", Toast.LENGTH_SHORT).show();

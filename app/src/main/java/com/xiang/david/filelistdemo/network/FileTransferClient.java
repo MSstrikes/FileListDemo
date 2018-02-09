@@ -32,9 +32,11 @@ public class FileTransferClient extends Thread{
     private int sendSize = 0;
     private Handler handler;
     private LinkedBlockingQueue<String> transFilesQueue = new LinkedBlockingQueue<>();
-    private String address;
+    private String address, currentTransferItem = null;
     private int portNum;
     private ExecutorService service = null;
+    private boolean pause = false;
+    private byte[] pauseKey = new byte[0];
     public FileTransferClient(Handler handler, String address, int portNum) {
         this.handler = handler;
         this.address = address;
@@ -57,10 +59,10 @@ public class FileTransferClient extends Thread{
             //向服务器发送上行数据
             while(!Thread.interrupted()){
                 try {
-                    String item = transFilesQueue.take();
+                    if (currentTransferItem == null) currentTransferItem = transFilesQueue.take();
                     dout = new DataOutputStream(socket.getOutputStream());
                     din = new DataInputStream(socket.getInputStream());
-                    sendFile = new File(item);
+                    sendFile = new File(currentTransferItem);
                     accessFile = new RandomAccessFile(sendFile, "rw");
                     totalSize = accessFile.length();
                     //获取当前进度再发送更好
@@ -78,6 +80,9 @@ public class FileTransferClient extends Thread{
                     int length;
                     sendSize = 0;
                     while ((length = accessFile.read(bytes, 0 , bytes.length)) != -1){
+                        synchronized (pauseKey){
+                            if (pause) pauseKey.wait();
+                        }
                         dout.write(bytes,0, length);
                         sendSize += length;
                         float sendSizeF = (float) sendSize;
@@ -91,8 +96,6 @@ public class FileTransferClient extends Thread{
                     System.out.println("传输完成");
                     sendSuccess();
                     sendFile = null;
-                    din.close();
-                    dout.close();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 } catch (UnknownHostException e) {
@@ -102,6 +105,12 @@ public class FileTransferClient extends Thread{
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+            try {
+                din.close();
+                dout.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     };
@@ -199,16 +208,23 @@ public class FileTransferClient extends Thread{
         msg.what = 2;
         msg.arg1 = transFilesQueue.size();
         handler.sendMessage(msg);
-
+        currentTransferItem = null;
     }
-    private void closeSocket(){
-        if (socket.isConnected()){
-            try {
-                socket.close();
-                service.shutdownNow();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+
+    public void pauseTransfer(){
+        pause = true;
+    }
+
+    public void stopTransfer(){
+        service.shutdownNow();
+        service = null;
+        currentTransferItem = null;
+    }
+
+    public void resumeTransfer(){
+        synchronized (pauseKey){
+            pause = false;
+            pauseKey.notifyAll();
         }
     }
 
